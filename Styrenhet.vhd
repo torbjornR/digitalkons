@@ -23,6 +23,7 @@ architecture Behavioral of Styrenhet is
 
 	type stateType is (idle, hold, analysis, alarm);
 	signal state 		            : stateType;
+	signal next_state          : stateType;
 	
 	signal okID								        : STD_LOGIC; -- 1 if ok, 0 otherwise	
 	
@@ -31,7 +32,7 @@ architecture Behavioral of Styrenhet is
 	
 	component Identifyer is
 		Port( clk, reset	  : IN STD_LOGIC;
-				  IDok        : OUT STD_LOGIC;
+				  IDok         : OUT STD_LOGIC;
 				  busy			      : OUT STD_LOGIC;
 				  memoryBus  	 : INOUT STD_LOGIC_VECTOR(3 downto 0);
 				  ID           : IN STD_LOGIC_VECTOR(3 downto 0));
@@ -51,10 +52,15 @@ begin
 			inc_count <= '0';
       notifyAlarm <= '0';
       processFailed <= '0';
-				
+			state <= idle;
       memoryBus <= "0000";
       collectorBus <= "0000";
 		elsif rising_edge(clk) then
+		  state <= next_state;
+		end if;
+		end process;
+		state_mahine:process(state)
+		begin
 			case state is
 		------------------------------IDLE-------------------------
 				when idle =>
@@ -65,7 +71,7 @@ begin
 						
 						triggProcess <= '1';
 						
-						state <= hold;
+						next_state <= hold;
 					end if;
 		------------------------------HOLD-------------------------
 				when hold =>
@@ -78,15 +84,15 @@ begin
 					if	readCompNow = '1' and compValue = '1' then
 						processFailed <= '0';
 						
-						state <= analysis;
+						next_state <= analysis;
 					elsif readCompNow = '1' and compValue = '0' then
 						processFailed <= '1';
 						
-						state <= analysis;
+						next_state <= analysis;
 					elsif timeOut = '1' then
 						processFailed <= '1';
 						
-						state <= analysis;
+						next_state <= analysis;
 					end if;
 					
 					st <= '0';
@@ -96,7 +102,7 @@ begin
 					if processFailed = '1' and count_full = '1' then
 						res_count <= '1';
 					
-						state <= alarm;
+						next_state <= alarm;
 					elsif processFailed = '1' then
 						triggProcess <= '1';
 						rt <= '1';
@@ -104,9 +110,9 @@ begin
 						
 						inc_count <= '1';
 						
-						state <= hold;
+						next_state <= hold;
 					elsif processFailed = '0' then
-						state <= idle;
+						next_state <= idle;
 					end if;
 					
 					processFailed <= '0';
@@ -116,12 +122,12 @@ begin
 					
 					if ackAlarm = '1' then
 						notifyAlarm <= '0';
-						state <= idle;
+						next_state <= idle;
 					end if;
 				when others =>
 					--What now?
 			end case;
-		end if;
+
     end process;
 
 end Behavioral;
