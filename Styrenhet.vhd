@@ -53,8 +53,8 @@ begin
       notifyAlarm <= '0';
       processFailed <= '0';
 			state <= idle;
-      memoryBus <= "0000";
-      collectorBus <= "0000";
+    --memoryBus <= "0000";
+    --collectorBus <= "0000";
 		elsif rising_edge(clk) then
 		  state <= next_state;
 		end if;
