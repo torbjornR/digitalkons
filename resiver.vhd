@@ -9,10 +9,11 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
 entity resiver is
-    Port (  clk    : in  STD_LOGIC;
+    Port (  clk     : in  STD_LOGIC;
             reset   : in  STD_LOGIC;
             datain  : in  STD_LOGIC;    -- data to transmitt parralell
-            dataut  : out STD_LOGIC);   -- outputt seriell.
+            eom     : out STD_LOGIC;
+            dataut  : out STD_LOGIC_VECTOR);   -- outputt seriell.
             
 end resiver;
 
@@ -21,9 +22,10 @@ architecture arki of resive is
   signal state        : state_type;
   signal next_state   : state_type;
   signal resiv        : STD_LOGIC_VECTOR (3 downto 0);
---  signal intdata : STD_LOGIC;   --
---  signal tempdata : STD_LOGIC_VECTOR (3 downto 0); 
---  signal clk : STD_LOGIC;
+  signal temp         : STD_LOGIC_VECTOR (1 downto 0);
+  signal manch_count  : STD_LOGIC_VECTOR (1 downto 0);
+  signal mesage       : STD_LOGIC_VECTOR (3 downto 0); 
+  
 
 begin
   state_switch:process(clk, reset)
@@ -31,9 +33,10 @@ begin
     if reset = '1' then
       state <= s00;
       eom <= '0';
-      resiv
+      mesage  <= "0000"; 
     elsif (rising_edge (clk))then
       state <= next_state;
+      temp <= temp (1 downto 0) & datain ;
     end if;
   end process;
   
@@ -88,8 +91,31 @@ begin
           next_state <= resiv; --till lagra bit
         else
           next_state <= s01;
---------------------res------------------------
-
-
+--------------------resiv------------------------
+      when resiv =>
+        manch_count <= manch_count + '1';
+        
+        if manch_count = "10" then
+      
+          case temp(1 downto 0) is
+          when "10" =>
+            mesege <= mesege & '1';
+            mesege_counter <= mesage_counter + '1';
+          when "01" =>
+            mesege <= metege & '0';
+            mesege_counter <= mesage_counter + '1';
+          when others =>
+            mesege_counter <= mesage_counter + '1';
+          end case;
+        end if;
+        if mesege_counter = "0100" then -- change to "1000" if we nede 8 bit.
+          state <= meseg_complete;
+          dataout <= mesage;
+          eom <= '1';
+        end if;
+        
+        when meseg_complete =>
+          eom <= '0';
+        end case;
 end arki;
 
